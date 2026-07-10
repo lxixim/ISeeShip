@@ -1,0 +1,69 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Notebook / editor
+.ipynb_checkpoints/
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.out
+*.err
+
+# Experiment outputs
+results/
+wandb/
+src/wandb/
+
+# Local environments
+.env
+.venv/
+venv/
+env/
+
+# Model / checkpoint artifacts
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+
+# Native build artifacts
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+*.exp
+
+# Build directories
+build/
+dist/
+*.egg-info/
+
+# Flash-Attention local build outputs
+flash-attention/build/
+flash-attention/csrc/**/build/
+flash-attention/**/*.so
+flash-attention/**/*.o
+
+# Large local evaluation data / generated artifacts
+classification/val_data/images/
+classification/val_data/*.pth
+classification/logs/
+coco_evaluation/*.json
+
+# Temporary files
+*.tmp
+*.temp
