@@ -23,6 +23,19 @@ logs/
 results/
 wandb/
 src/wandb/
+/output/
+/tmp/
+/.codex_tmp/
+/.codex_work/
+/figure_sources_backup/
+
+# External sources and downloaded data stay local
+/flash-attention/
+/data/
+/checkpoints/
+
+# Historical local launch examples
+/src/scripts/ood/2B_*.sh
 
 # Local environments
 .env
@@ -51,12 +64,6 @@ env/
 build/
 dist/
 *.egg-info/
-
-# Flash-Attention local build outputs
-flash-attention/build/
-flash-attention/csrc/**/build/
-flash-attention/**/*.so
-flash-attention/**/*.o
 
 # Large local evaluation data / generated artifacts
 classification/val_data/images/

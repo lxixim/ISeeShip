@@ -1,217 +1,105 @@
-<div align="center">
-  <h1 align="center">SVI-R1</h1>
-  <h3 align="center">Reinforcement Learning with Task-Specific Rewards for Ship Visual Intelligence</h3>
-  <p align="center">
-    <strong>Ship-Expert</strong>: A Multi-Task Benchmark for Semantically Explainable Ship Visual Intelligence
-  </p>
-</div>
+# ISeeShip and SVI-R1
+
+Official project repository for **ISeeShip: A Multi-Task Benchmark with Reinforcement Learning for Semantically Explainable Ship Visual Intelligence**.
+
+ISeeShip covers fine-grained ship classification, detection, and open-set recognition. SVI-R1 applies task-specific rewards to structured model responses with `<think>...</think><answer>...</answer>`.
 
 <p align="center">
   <img src="assets/overall.png" alt="SVI-R1 overview" width="100%">
 </p>
 
-`SVI-R1` is a reinforcement learning framework for **semantically explainable ship visual intelligence**. Built on top of the new `Ship-Expert` benchmark, it equips multimodal large language models with structured reasoning for **fine-grained ship classification**, **ship detection**, and **open-set recognition** in real-world maritime scenarios.
+## Dataset
 
-Unlike standard supervised fine-tuning, `SVI-R1` uses **task-specific rewards** to guide the model toward better discrimination, stronger generalization, and more interpretable visual reasoning chains.
-
-## Highlights
-
-- **Multi-task benchmark**: `Ship-Expert` unifies classification, detection, and open-set recognition in one maritime benchmark.
-- **Explainable reasoning**: every training sample follows a structured `<think>...</think><answer>...</answer>` format.
-- **RL instead of template memorization**: `SVI-R1` optimizes reasoning behavior with reinforcement learning rather than only imitating fixed CoT templates.
-- **Task-specific reward design**: different objectives are used for classification, detection, and open-set reasoning.
-- **Few-shot maritime setting**: the framework is built for data-scarce, high-granularity ship recognition scenarios.
-
-## Ship-Expert Benchmark
-
-`Ship-Expert` is a camera-captured maritime benchmark with structured reasoning annotations for three core tasks.
-
-| Item | Value |
-| --- | --- |
-| Images | 8,964 |
-| Categories | 30 fine-grained ship categories |
-| Super-classes | 7 functional groups |
-| Tasks | Classification, Detection, Open-set Recognition |
-| Annotation format | `<think>...</think><answer>...</answer>` |
-| Image source | Real-world camera-captured ship imagery |
-
-### Task Overview
-
-| Task | Goal | Output Format |
-| --- | --- | --- |
-| Classification | Identify the fine-grained ship category | `<answer>ship_type</answer>` |
-| Detection | Localize and identify ships in the image | `<answer>[{"Position": [...], "Confidence": ...}]</answer>` |
-| Open-set Recognition | Predict an in-distribution class or reject as unknown | `<answer>ship_type / unknown</answer>` |
-
-<p align="center">
-  <img src="assets/ship_expert_distribution.png" alt="Ship-Expert distribution" width="78%">
-</p>
-
-### Unified Data Format
-
-```json
-{
-  "image": "path/to/image.jpg",
-  "problem": "task-specific prompt",
-  "solution": "<think>...</think><answer>...</answer>"
-}
-```
+- **Images**: 8,964 camera-captured ship images spanning 30 categories.
+- **Tasks**: classification, detection, and open-set recognition.
+- **Image download**: [Ship30 dataset](https://github.com/lxixim/Ship30/tree/main/dataset).
+- **Data formats and preparation**: [dataset guide](dataset/README.md).
 
 ## Main Results
 
-The current manuscript reports the following headline results for `SVI-R1`:
+Four-shot benchmark results reported in the paper:
 
-| Method | Backbone | Classification Acc. | Open-set Acc. | Detection mAP |
+| Method | Backbone | Classification Accuracy (%) | Detection AP50 (%) | Open-Set Overall Accuracy (%) |
 | --- | --- | ---: | ---: | ---: |
-| SVI-R1 | Qwen2-VL-2B | 70.0 | 73.1 | 86.1 |
+| SVI-SFT | Qwen2-VL-2B | 47.6 | 57.0 | 58.8 |
+| SVI-R1 | Qwen2-VL-2B | **70.0** | **86.1** | **72.3** |
 
-These results indicate that `SVI-R1` improves generalization across all three ship visual intelligence tasks while retaining interpretable intermediate reasoning.
+## Installation
 
-## Framework
-
-`SVI-R1` follows a GRPO-style reinforcement learning pipeline. Given an image and task prompt, the policy model generates structured reasoning and a final answer. The output is then scored with a **format reward** plus a **task-specific accuracy reward**, and the policy is updated accordingly.
-
-<p align="center">
-  <img src="assets/framework_examples.png" alt="SVI-R1 examples" width="100%">
-</p>
-
-### Reward Design
-
-| Task | Reward Design |
-| --- | --- |
-| Shared format reward | Enforces valid `<think>...</think><answer>...</answer>` output |
-| Classification | Hierarchy-aware partial credit for semantically related ship classes |
-| Detection | Localization quality + confidence calibration |
-| Open-set recognition | Correct in-distribution prediction + reliable unknown rejection |
-
-## Repository Structure
-
-```text
-assets/                 paper figures and teaser images
-classification/         classification inference and logs
-coco_evaluation/        detection evaluation utilities
-dataset/                dataset notes and notebook utilities
-ship_data_build/        data conversion and benchmark construction scripts
-scripts/                dataset preparation helpers
-src/scripts/            training launch scripts
-src/visual.yml          conda environment file
-```
-
-## Setup
-
-The repository provides a Conda environment file at `src/visual.yml`.
+The training environment targets Linux and CUDA:
 
 ```bash
 conda env create -f src/visual.yml
 conda activate ISeeShip
 ```
 
-If you already have an existing environment, you can also update dependencies manually based on `src/visual.yml`.
-
-## Data Preparation
-
-The repository already includes several data-construction tools for building the benchmark and multi-shot splits:
-
-- `ship_data_build/xml2coco_ship.py`
-- `ship_data_build/voc2rft_detection.py`
-- `ship_data_build/build_openset_dataset_with_think.py`
-- `ship_data_build/create_multi_shot_datasets.py`
-- `ship_data_build/create_openset_dataset_with_ood.py`
-- `ship_data_build/generate_cot_for_dataset.py`
-
-For notebook-based processing, see:
-
-```bash
-dataset/build_dataset.ipynb
-```
+Flash-Attention is installed as a dependency rather than bundled as project source. See the [upstream installation instructions](https://github.com/Dao-AILab/flash-attention).
 
 ## Training
 
-Before running the provided launchers, update the following variables inside each script:
+| Setting | Value |
+| --- | --- |
+| Backbone | Qwen2-VL-2B |
+| LoRA rank / alpha | 128 / 256 |
+| GRPO group size | 6 |
+| Maximum updates | 200 |
+| Optimizer | AdamW |
+| Main benchmark seed | 100 |
+| Main support sizes | 4-shot and 8-shot |
+| Main hardware | 2 NVIDIA A800 GPUs |
 
-- `DATA_PATH`
-- `CKPT_PATH`
-- `SAVE_PATH`
-- `CUDA_VISIBLE_DEVICES`
-
-### Classification
-
-GRPO-style classification training:
-
-```bash
-bash src/scripts/classification/2B_ship30_4_shot_lora2048.sh
-```
-
-SFT baseline:
+Choose the corresponding prepared support set and configure the source, model, output, and allocated GPUs:
 
 ```bash
-bash src/scripts/classification/2B_ship30_4_shot_sft.sh
+export TRAINING_ROOT="/path/to/task_training_source"
+export DATA_PATH="/path/to/prepared/classification_4shot"
+export CKPT_PATH="/path/to/Qwen2-VL-2B-Instruct"
+export SAVE_PATH="/path/to/output"
+export CUDA_VISIBLE_DEVICES="<allocated_gpu_id_a>,<allocated_gpu_id_b>"
+export NPROC_PER_NODE=2
+export SHOT=4
+export SEED=100
+bash src/scripts/classification/train_grpo.sh
 ```
 
-### Detection
+The source layout and optional settings are described in the [training guide](src/scripts/README.md). GPU IDs in the example are placeholders; select your allocated devices explicitly. `SHOT` labels the run; `DATA_PATH` must point to the prepared dataset for that support size.
 
-GRPO-style detection training:
+| Task | SVI-R1 | SVI-SFT |
+| --- | --- | --- |
+| Classification | `src/scripts/classification/train_grpo.sh` | `src/scripts/classification/train_sft.sh` |
+| Detection | `src/scripts/detection/train_grpo.sh` | `src/scripts/detection/train_sft.sh` |
+| Open-set recognition | `src/scripts/ood/train_grpo.sh` | `src/scripts/ood/train_sft.sh` |
 
-```bash
-bash src/scripts/dectetion/2B_ship_detection_4shot.sh
-```
-
-SFT baseline:
-
-```bash
-bash src/scripts/dectetion/2B_ship_detection_4shot_sft.sh
-```
-
-### Open-Set Recognition
-
-GRPO-style open-set training:
-
-```bash
-bash src/scripts/ood/train_grpo.sh
-```
-
-SFT baseline:
-
-```bash
-bash src/scripts/ood/train_sft.sh
-```
-
-Zero-shot OOD setting:
-
-```bash
-bash src/scripts/ood/2B_ship14_zeroshot_ood.sh
-```
+For the controlled classification/detection comparisons, use the same support images and evaluation lists across methods, seeds 42, 43, and 44, and the final checkpoint. Their learning rates are `2e-5` for classification and `1e-6` for detection, as configured in the corresponding launchers.
 
 ## Evaluation
 
-### Classification Evaluation
+- `classification/classification_ship30_infere.py`: external-API classification baseline inference. Configure the provider, credentials, images, and local evaluation manifest before use.
+- `coco_evaluation/coco_evaluation.py`: `CocoDetectionEvaluator` for existing COCO predictions and annotations.
+- `coco_evaluation/evaluation.ipynb`: detection-scoring notebook.
 
-```bash
-python classification/classification_ship30_infere.py
+Detection scoring uses COCO image/category IDs and pixel-coordinate `[x, y, width, height]` boxes. Convert normalized model output coordinates before evaluation.
+
+## Repository Structure
+
+```text
+assets/                 project figures
+dataset/                data access and formats
+ship_data_build/        annotation conversion and construction tools
+scripts/                data-preparation helpers
+src/scripts/            training launchers and configuration
+src/visual.yml          training environment
+classification/         API baseline inference
+coco_evaluation/        detection evaluation
+tests/                  launcher configuration tests
 ```
 
-### Detection Evaluation
+Run launcher tests without starting models or GPU jobs:
 
 ```bash
-python coco_evaluation/coco_evaluation.py
+python -m unittest discover -s tests -v
 ```
-
-Notebook-based evaluation is also available:
-
-```bash
-coco_evaluation/evaluation.ipynb
-```
-
-## Release Notes
-
-- Some shell launchers still preserve lab-internal absolute paths and should be changed to your local paths before running.
-- Public links for the paper, dataset, and checkpoints will be added after release.
-- A cleaner one-command training and evaluation entry will be added in a later update.
 
 ## Citation
 
-The formal BibTeX entry will be added after the public paper release.
-
-## Acknowledgement
-
-This project builds on the broader open-source ecosystem around multimodal large models, reinforcement learning fine-tuning, and efficient vision-language training.
+If this project supports your research, please cite **ISeeShip: A Multi-Task Benchmark with Reinforcement Learning for Semantically Explainable Ship Visual Intelligence**.
