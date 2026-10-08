@@ -5,7 +5,7 @@ Official project repository for **ISeeShip: A Multi-Task Benchmark with Reinforc
 ISeeShip covers fine-grained ship classification, detection, and open-set recognition. SVI-R1 applies task-specific rewards to structured model responses with `<think>...</think><answer>...</answer>`.
 
 <p align="center">
-  <img src="assets/overall.png" alt="SVI-R1 overview" width="100%">
+  <img src="assets/framework.png" alt="ISeeShip construction pipeline and SVI-R1 framework" width="100%">
 </p>
 
 ## Dataset
